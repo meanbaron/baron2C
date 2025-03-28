@@ -1,35 +1,66 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, {useEffect, useState} from "react";
+import axios from 'axios';
+
+
+const API_URL = "http://localhost:5000/api/items";
+
 
 function App() {
-  const [count, setCount] = useState(0)
+const [items, setItems] = useState([]);
+const [newItem, setNewItem] = useState("");
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>THIS IS MY FIRST ACTIVITY</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+
+// fetch items from API
+
+useEffect(() =>{
+axios.get(API_URL)
+    .then(response => setItems(response.data))
+    .catch(error => console.error("Error Fetching Item:", error));
+}, []);
+
+// Add a new item
+const addItem = () => {
+  axios.post(API_URL, {name: newItem})
+  .then(response => setItems([...items, response.data]))
+  .catch(error => console.error("Error Adding Item:", error));
+};
+
+// Update
+const updateItem = (id, name) =>{
+axios.put(`${API_URL}/${id}`, { name })
+.then(response => {
+setItems(items.map(item => (item.id === id ? response.data : item)));
+})
+.catch(error => console.error("Error Updating Item:", error));
+};
+
+// Delete
+const deleteItem = (id) => {
+axios.delete(`${API_URL}/${id}`)
+.then(() => {
+  setItems(items.filter(item => item.id !== id));
+})
+  .catch(error => console.error("Error Deleting Item:", error));
+};
+
+
+return (
+<div>
+  <h1>React + Express REST API</h1>
+  <input type="text" value={newItem}
+  onChange={(e)=> setNewItem(e.target.value)}
+  placeholder="Add Item"/>
+  <button onClick={addItem}>Add Item</button>
+<ul>
+  {items.map(item =>(
+      <li key={item.id}>
+      <input type="text" value={item.name} 
+      onChange={(e) => updateItem(item.id, e.target.value)}/>
+      <button onClick={() => deleteItem(item.id)}>Delete</button>
+    </li>
+  ))}
+</ul>
+</div>);
 }
 
-export default App
+export default App;
